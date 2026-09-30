@@ -1,0 +1,213 @@
+Write a python code for the KNN algorithm.
+import pandas as pd
+import numpy as np
+from collections import Counter
+
+data = pd.read_csv("input_file.csv")
+df = pd.DataFrame(data)
+
+def knn_predict(train_df, test_point, k=3):
+    distances = []
+
+    for idx, row in train_df.iterrows():
+        dist = np.sqrt((row['X'] - test_point[0])**2 + (row['Y'] - test_point[1])**2)
+        distances.append((row['ID'], dist, row['Label']))
+    
+    distances.sort(key=lambda item: item[1])
+    
+    k_neighbors = distances[:k]
+    
+    votes = [neighbor[2] for neighbor in k_neighbors]
+    majority_class = Counter(votes)
+
+    max_votes = ""
+    max_value = 0
+    for key, value in majority_class.items():
+      if max_value < value:
+        max_value = value
+        max_votes = key
+    
+    return max_votes, k_neighbors
+  
+test_point = (5.7, 2.1)
+
+for k_val in [3, 5]:
+    predicted_label, neighbors = knn_predict(df, test_point, k=k_val)
+    print(f"--- K = {k_val} ---")
+    print(f"Test Point: {test_point}")
+    print("Nearest Neighbors:")
+    for nid, d, lbl in neighbors:
+        print(f"  {nid}: Distance = {d:.4f}, Label = {lbl}")
+    print(f"Predicted Class: {predicted_label}\n")
+
+output
+K = 3 
+Test Point: (5.7, 2.1)
+Nearest Neighbors:
+  P18: Distance = 0.7071, Label = Blue
+  P11: Distance = 0.9487, Label = Green
+  P9: Distance = 1.1402, Label = Blue
+Predicted Class: Blue
+
+--- K = 5 ---
+Test Point: (5.7, 2.1)
+Nearest Neighbors:
+  P18: Distance = 0.7071, Label = Blue
+  P11: Distance = 0.9487, Label = Green
+  P9: Distance = 1.1402, Label = Blue
+  P19: Distance = 1.1705, Label = Green
+  P10: Distance = 1.4142, Label = Blue
+Predicted Class: Blue
+
+
+
+
+
+
+
+
+
+Write a python code for the Naïve Bayes Classifier.
+
+import pandas as pd
+import numpy as np
+from collections import Counter
+
+data = pd.read_csv("input_file.csv")
+df = pd.DataFrame(data)
+
+spam_count = 0
+not_spam_count = 0
+
+for idx,row in df.iterrows():
+    if row[5] == "Spam":
+        spam_count += 1
+    else:
+        not_spam_count += 1
+
+total = spam_count + not_spam_count
+P_spam = spam_count / total
+P_not_spam = not_spam_count / total
+
+def get_feature_counts(df, feature, class_name):
+    possible_values = df[feature].unique()
+    counts = {}
+    for value in possible_values:
+        count = 0
+        for i in range(len(df)):
+            if df.loc[i, "Class"] == class_name:
+                if df.loc[i, feature] == value:
+                    count += 1
+        counts[value] = count
+    return counts
+
+def conditional_probability(feature, value, class_name):
+    counts = get_feature_counts(df, feature, class_name)
+    K = len(counts)
+    class_count = 0
+    for i in range(len(df)):
+        if df.loc[i, "Class"] == class_name:
+            class_count += 1
+    if value in counts:
+        occurrence = counts[value]
+    else:
+        occurrence = 0
+    probability = (occurrence + 1) / (class_count + K)
+
+    return probability
+
+total_records = len(df)
+
+spam_count = 0
+not_spam_count = 0
+
+for i in range(len(df)):
+    if df.loc[i, "Class"] == "Spam":
+        spam_count += 1
+    elif df.loc[i, "Class"] == "Not_Spam":
+        not_spam_count += 1
+
+print("Enter the email details:")
+word_free = int(input("Word_Free: "))
+word_win = int(input("Word_Win: "))
+length = int(input("Length: "))
+links = int(input("Links: "))
+
+P_free_spam = conditional_probability("Word_Free",word_free,"Spam")
+P_win_spam = conditional_probability("Word_Win",word_win,"Spam")
+P_length_spam = conditional_probability("Length",length,"Spam")
+P_links_spam = conditional_probability("Links",links,"Spam")
+
+P_free_not_spam = conditional_probability("Word_Free",word_free,"Not_Spam")
+P_win_not_spam = conditional_probability("Word_Win",word_win,"Not_Spam")
+P_length_not_spam = conditional_probability("Length",length,"Not_Spam")
+P_links_not_spam = conditional_probability("Links",links,"Not_Spam")
+
+unnormalized_spam = (P_spam* P_free_spam* P_win_spam* P_length_spam* P_links_spam)
+
+unnormalized_not_spam = (P_not_spam* P_free_not_spam* P_win_not_spam* P_length_not_spam* P_links_not_spam)
+
+normalization = (unnormalized_spam +unnormalized_not_spam)
+P_spam_given_X = (unnormalized_spam / normalization)
+P_not_spam_given_X = (unnormalized_not_spam / normalization)
+
+print("\n========================================")
+print("NAIVE BAYES WITH LAPLACE SMOOTHING")
+print("========================================")
+print("\nPrior Probabilities:")
+print("P(Spam)     =", P_spam)
+print("P(Not_Spam) =", P_not_spam)
+print("\nConditional Probabilities for Spam:")
+print("P(Word_Free =", word_free,"| Spam) =", P_free_spam)
+print("P(Word_Win =", word_win,"| Spam) =", P_win_spam)
+print("P(Length =", length,"| Spam) =", P_length_spam)
+print("P(Links =", links,"| Spam) =", P_links_spam)
+print("\nConditional Probabilities for Not_Spam:")
+print("P(Word_Free =", word_free,"| Not_Spam) =", P_free_not_spam)
+print("P(Word_Win =", word_win,"| Not_Spam) =", P_win_not_spam)
+print("P(Length =", length,"| Not_Spam) =", P_length_not_spam)
+print("P(Links =", links,"| Not_Spam) =", P_links_not_spam)
+print("\nUnnormalized Probabilities:")
+print("P~(Spam)     =", unnormalized_spam)
+print("P~(Not_Spam) =", unnormalized_not_spam)
+print("\nNormalized Probabilities:")
+print("P(Spam | X)     =", P_spam_given_X)
+print("P(Not_Spam | X) =", P_not_spam_given_X)
+
+if P_spam_given_X > P_not_spam_given_X:
+    print("\nPrediction: SPAM")
+else:
+    print("\nPrediction: NOT SPAM")
+
+OUTPUT:
+Enter the email details:
+Word_Free: 2
+Word_Win: 1
+Length: 160
+Links: 3
+
+NAIVE BAYES WITH LAPLACE SMOOTHING:
+
+Prior Probabilities:
+P(Spam)     = 0.5
+P(Not_Spam) = 0.5
+
+Conditional Probabilities for Spam:
+P(Word_Free = 2 | Spam) = 0.3333333333333333
+P(Word_Win = 1 | Spam) = 0.38461538461538464
+P(Length = 160 | Spam) = 0.11538461538461539
+P(Links = 3 | Spam) = 0.25
+
+Conditional Probabilities for Not_Spam:
+P(Word_Free = 2 | Not_Spam) = 0.06666666666666667
+P(Word_Win = 1 | Not_Spam) = 0.07692307692307693
+P(Length = 160 | Not_Spam) = 0.038461538461538464
+P(Links = 3 | Not_Spam) = 0.0625
+Unnormalized Probabilities:
+P~(Spam)     = 0.0018491124260355029
+P~(Not_Spam) = 6.1637080867850105e-06
+Normalized Probabilities:
+P(Spam | X)     = 0.9966777408637874
+P(Not_Spam | X) = 0.003322259136212625
+Prediction: SPAM
+
