@@ -1,0 +1,117 @@
+Source code:
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+data = pd.read_csv("Student_marks.csv")
+data.columns = data.columns.str.strip()
+print("Dataset:")
+print(data)
+print("\nColumn Names:")
+print(data.columns)
+X = data.iloc[:, 0].values.astype(float)
+y = data.iloc[:, 1].values.astype(float)
+y = (y + 1) / 2
+mean_X = np.mean(X)
+std_X = np.std(X)
+X_scaled = (X - mean_X) / std_X
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+def hypothesis(X, w, b):
+    return sigmoid(w * X + b)
+def cost_function(X, y, w, b):
+    m = len(y)
+    h = hypothesis(X, w, b)
+    epsilon = 1e-15
+    h = np.clip(h, epsilon, 1 - epsilon)
+    cost = -(1 / m) * np.sum(
+        y * np.log(h) +
+        (1 - y) * np.log(1 - h)
+    )
+    return cost
+def gradient_descent(X, y, learning_rate, iterations):
+    m = len(y)
+    w = 0
+    b = 0
+    cost_history = []
+    for i in range(iterations):
+        h = hypothesis(X, w, b)
+        dw = (1 / m) * np.sum((h - y) * X)
+        db = (1 / m) * np.sum(h - y)
+        w = w - learning_rate * dw
+        b = b - learning_rate * db
+        cost = cost_function(X, y, w, b)
+        cost_history.append(cost)
+    return w, b, cost_history
+def logistic_regression(X, y):
+    learning_rate = 0.1
+    iterations = 10000
+
+    w, b, cost_history = gradient_descent(
+        X,
+        y,
+        learning_rate,
+        iterations
+    )
+    return w, b, cost_history
+w, b, cost_history = logistic_regression(
+    X_scaled,
+    y
+)
+print("\nWeight (w):", w)
+print("Bias (b):", b)
+print("Final Cost:", cost_history[-1])
+def predict(marks, w, b):
+    scaled_marks = (marks - mean_X) / std_X
+    probability = hypothesis(
+        scaled_marks,
+        w,
+        b
+    )
+    if probability >= 0.5:
+        prediction = "PASS"
+    else:
+        prediction = "FAIL"
+    return probability, prediction
+marks = 20
+probability, prediction = predict(
+    marks,
+    w,
+    b
+)
+print("\nPrediction for 20 Marks")
+print("Probability:", probability)
+print("Result:", prediction)
+Y_pred = hypothesis(X_scaled, w, b)
+predicted_class = np.where(Y_pred >= 0.5, 1, 0)
+accuracy = np.mean(predicted_class == y)
+print("\nAccuracy:", accuracy * 100, "%")
+result = pd.DataFrame({
+    "Marks": X,
+    "Actual": y,
+    "Probability": Y_pred,
+    "Predicted": predicted_class
+})
+print("\nPrediction Table")
+print(result)
+plt.figure(figsize=(8,6))
+plt.scatter(X, y, label="Training Data")
+X_line = np.linspace(min(X), max(X), 200)
+X_line_scaled = (X_line - mean_X) / std_X
+Y_line = sigmoid(w * X_line_scaled + b)
+plt.plot(X_line, Y_line, label="Sigmoid Curve")
+plt.scatter(
+    marks,
+    probability,
+    marker="*",
+    s=200,
+    label="Prediction (20 Marks)"
+)
+plt.xlabel("Semester Marks")
+plt.ylabel("Probability of Passing")
+plt.title("Logistic Regression")
+plt.grid(True)
+plt.legend()
+plt.show()
+ 
+
