@@ -1,0 +1,404 @@
+          Write a Python program to implement the logical AND gate using a Single Layer Perceptron (SLP) model. The perceptron should be trained using a simple learning rule until it learns the correct weights and bias that represent the AND function. Use a user-defined function to implement the  perceptron training and testing process.
+import csv
+import matplotlib.pyplot as plt
+def step_activation(net):
+    if net >= 0:
+        return 1
+    else:
+        return 0
+def load_dataset_from_csv(file_path):
+    X = []
+    d = []
+    with open(file_path, mode='r') as file:
+        csv_reader = csv.reader(file)
+        next(csv_reader)  # Skip the header row
+           for row in csv_reader:
+            if len(row) >= 3:
+                x1 = int(row[0])
+                x2 = int(row[1])
+                target = int(row[2])
+                
+                X.append([x1, x2])
+                d.append(target)
+    return X, d
+def run_perceptron():
+    # Load dataset for AND gate from the CSV file
+    csv_file_path = "slp.csv"
+    try:
+        X, d = load_dataset_from_csv(csv_file_path)
+    except FileNotFoundError:
+        print(f"Error: The file '{csv_file_path}' was not found. Please create it first.")
+        return
+    eta = 1
+    w1 = 0
+    w2 = 0
+    b = -1
+    epoch = 1
+    print("--- TRAINING PHASE ---")
+    while True:
+        updates_made = 0
+        print("\nEpoch", epoch)
+            for i in range(len(X)):
+            x1 = X[i][0]
+            x2 = X[i][1]
+            target = d[i]
+            net = (w1 * x1) + (w2 * x2) + b
+            y = step_activation(net)
+            e = target - y
+           
+            if e != 0:
+                updates_made = updates_made + 1
+                w1 = w1 + (eta * e * x1)
+                w2 = w2 + (eta * e * x2)
+                b = b + (eta * e)
+           print(f"Pattern: ({x1}, {x2}) | Net: {net} | Predicted: {y} | Target: {target} | Weights: [{w1}, {w2}] | Bias: {b}")
+        if updates_made == 0:
+            print(f"\nPerceptron successfully converged in {epoch} epochs!")
+            break
+        epoch = epoch + 1
+   print("\n--- TESTING PHASE ---")
+    for i in range(len(X)):
+        x1 = X[i][0]
+        x2 = X[i][1]
+        net = (w1 * x1) + (w2 * x2) + b
+        y = step_activation(net)
+        print(f"Input: ({x1}, {x2}) -> Predicted Output: {y}")
+    print(f"\nFinal Parameters -> w1: {w1} | w2: {w2} | b: {b}")
+    print("\nGenerating Decision Boundary Plot...")
+    x1_class0 = [X[i][0] for i in range(len(X)) if d[i] == 0]
+    x2_class0 = [X[i][1] for i in range(len(X)) if d[i] == 0]
+    x1_class1 = [X[i][0] for i in range(len(X)) if d[i] == 1]
+    x2_class1 = [X[i][1] for i in range(len(X)) if d[i] == 1]
+   plt.figure(figsize=(6, 5))
+    plt.scatter(x1_class0, x2_class0, color='red', marker='o', s=100, label='Class 0 (False)')
+    plt.scatter(x1_class1, x2_class1, color='blue', marker='s', s=100, label='Class 1 (True)')
+
+    if w2 != 0:
+        # Generate x1 coordinate line limits spanning slightly past bounds
+        x1_values = [-0.5, 1.5]
+        x2_values = [(-w1 * x1_val - b) / w2 for x1_val in x1_values]
+        plt.plot(x1_values, x2_values, color='green', linestyle='--', linewidth=2, label='Decision Boundary')
+    else:
+        # If w2 is zero, boundary is a vertical line: x1 = -b / w1
+        if w1 != 0:
+            plt.axvline(x=-b / w1, color='green', linestyle='--', linewidth=2, label='Decision Boundary')
+    plt.xlim(-0.5, 1.5)
+    plt.ylim(-0.5, 1.5)
+    plt.xlabel('Input X1')
+    plt.ylabel('Input X2')
+    plt.title(f'Single Layer Perceptron - AND Gate Decision Boundary (Epochs: {epoch})')
+    plt.axhline(0, color='black', linewidth=0.5, ls=':')
+    plt.axvline(0, color='black', linewidth=0.5, ls=':')
+    plt.grid(True, linestyle=':', alpha=0.6)
+    plt.legend(loc='upper left')
+    
+   
+    plt.savefig('perceptron_boundary.png', dpi=300)
+    plt.show()
+if __name__ == "__main__":
+    run_perceptron()
+
+output:
+TRAINING PHASE 
+
+Epoch 1
+Pattern: (0, 0) | Net: -1 | Predicted: 0 | Target: 0 | Weights: [0, 0] | Bias: -1
+Pattern: (0, 1) | Net: -1 | Predicted: 0 | Target: 0 | Weights: [0, 0] | Bias: -1
+Pattern: (1, 0) | Net: -1 | Predicted: 0 | Target: 0 | Weights: [0, 0] | Bias: -1
+Pattern: (1, 1) | Net: -1 | Predicted: 0 | Target: 1 | Weights: [1, 1] | Bias: 0
+
+Epoch 2
+Pattern: (0, 0) | Net: 0 | Predicted: 1 | Target: 0 | Weights: [1, 1] | Bias: -1
+Pattern: (0, 1) | Net: 0 | Predicted: 1 | Target: 0 | Weights: [1, 0] | Bias: -2
+Pattern: (1, 0) | Net: -1 | Predicted: 0 | Target: 0 | Weights: [1, 0] | Bias: -2
+Pattern: (1, 1) | Net: -1 | Predicted: 0 | Target: 1 | Weights: [2, 1] | Bias: -1
+
+Epoch 3
+Pattern: (0, 0) | Net: -1 | Predicted: 0 | Target: 0 | Weights: [2, 1] | Bias: -1
+Pattern: (0, 1) | Net: 0 | Predicted: 1 | Target: 0 | Weights: [2, 0] | Bias: -2
+Pattern: (1, 0) | Net: 0 | Predicted: 1 | Target: 0 | Weights: [1, 0] | Bias: -3
+Pattern: (1, 1) | Net: -2 | Predicted: 0 | Target: 1 | Weights: [2, 1] | Bias: -2
+
+Epoch 4
+Pattern: (0, 0) | Net: -2 | Predicted: 0 | Target: 0 | Weights: [2, 1] | Bias: -2
+Pattern: (0, 1) | Net: -1 | Predicted: 0 | Target: 0 | Weights: [2, 1] | Bias: -2
+Pattern: (1, 0) | Net: 0 | Predicted: 1 | Target: 0 | Weights: [1, 1] | Bias: -3
+Pattern: (1, 1) | Net: -1 | Predicted: 0 | Target: 1 | Weights: [2, 2] | Bias: -2
+
+Epoch 5
+Pattern: (0, 0) | Net: -2 | Predicted: 0 | Target: 0 | Weights: [2, 2] | Bias: -2
+Pattern: (0, 1) | Net: 0 | Predicted: 1 | Target: 0 | Weights: [2, 1] | Bias: -3
+Pattern: (1, 0) | Net: -1 | Predicted: 0 | Target: 0 | Weights: [2, 1] | Bias: -3
+Pattern: (1, 1) | Net: 0 | Predicted: 1 | Target: 1 | Weights: [2, 1] | Bias: -3
+
+Epoch 6
+Pattern: (0, 0) | Net: -3 | Predicted: 0 | Target: 0 | Weights: [2, 1] | Bias: -3
+Pattern: (0, 1) | Net: -2 | Predicted: 0 | Target: 0 | Weights: [2, 1] | Bias: -3
+Pattern: (1, 0) | Net: -1 | Predicted: 0 | Target: 0 | Weights: [2, 1] | Bias: -3
+Pattern: (1, 1) | Net: 0 | Predicted: 1 | Target: 1 | Weights: [2, 1] | Bias: -3
+
+Perceptron successfully converged in 6 epochs!
+
+ TESTING PHASE
+Input: (0, 0) -> Predicted Output: 0
+Input: (0, 1) -> Predicted Output: 0
+Input: (1, 0) -> Predicted Output: 0
+Input: (1, 1) -> Predicted Output: 1
+
+Final Parameters -> w1: 2 | w2: 1 | b: -3
+
+
+Generating Decision Boundary Plot...
+
+
+
+
+
+
+
+
+ 
+2.Write Python code to calculate the confusion matrix and accuracy from the given dataset.
+Example Dataset
+We have a binary classification problem (disease detection):
+
+import random
+import matplotlib.pyplot as plt
+def generate_shuffled_labels(num_zeros=900, num_ones=100):
+    """
+    Generates a list with exactly 900 zeros and 100 ones, then shuffles it randomly.
+    """
+    labels = ([0] * num_zeros) + ([1] * num_ones)
+    for i in range(len(labels) - 1, 0, -1):
+        j = random.randint(0, i)
+        labels[i], labels[j] = labels[j], labels[i]
+        
+    return labels
+y_true = generate_shuffled_labels()
+y_pred = generate_shuffled_labels()
+tp, tn, fp, fn = 0, 0, 0, 0
+for i in range(len(y_true)):
+    actual = y_true[i]
+    predicted = y_pred[i]
+    
+    if actual == 1 and predicted == 1:
+        tp += 1
+    elif actual == 0 and predicted == 0:
+        tn += 1
+    elif actual == 0 and predicted == 1:
+        fp += 1
+    elif actual == 1 and predicted == 0:
+        fn += 1
+print("=== 1. Confusion Matrix ===")
+print(f"True Positives (TP)  : {tp}")
+print(f"True Negatives (TN)  : {tn}")
+print(f"False Positives (FP) : {fp}")
+print(f"False Negatives (FN) : {fn}\n")
+precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+print("=== 2. Metric Decision ===")
+if fp > fn:
+    chosen_metric = "Precision"
+    reason = "False Positives (FP) outnumber False Negatives (FN). Precision focuses on optimizing predictive certainty."
+    metric_value = precision
+else:
+    chosen_metric = "Recall"
+    reason = "False Negatives (FN) outnumber or equal False Positives (FP). Recall focuses on capturing all positive targets."
+    metric_value = recall
+print(f"Selected Metric: {chosen_metric}")
+print(f"Reasoning      : {reason}")
+print(f"Value          : {metric_value:.4f}\n")
+priorities = ["False Positives (FP)", "False Negatives (FN)"]
+high_priority = random.choice(priorities)
+print("=== 3. Priority Assignment ===")
+print(f"Randomly Assigned Higher Priority: {high_priority}")
+if high_priority == "False Negatives (FN)":
+    beta = 2.0  
+    print("Setting Beta = 2.0 (Weighs Recall higher than Precision)")
+else:
+    beta = 0.5  
+    print("Setting Beta = 0.5 (Weighs Precision higher than Recall)")
+print("\n=== 4. F-Beta Score ===")
+f_beta = 0.0
+if precision + recall > 0:
+    beta_squared = beta ** 2
+    f_beta = (1 + beta_squared) * (precision * recall) / ((beta_squared * precision) + recall)
+    print(f"Calculated F-{beta} Score: {f_beta:.4f}")
+else:
+    print("F-Beta Score cannot be calculated because both Precision and Recall are 0.")
+print("\nGenerating Confusion Matrix Plot...")
+matrix_data = [[tn, fp], 
+               [fn, tp]]
+fig, ax = plt.subplots(figsize=(6, 5))
+cax = ax.matshow(matrix_data, cmap='Blues')
+fig.colorbar(cax)
+labels_text = [
+    [f"TN\n{tn}", f"FP\n{fp}"],
+    [f"FN\n{fn}", f"TP\n{tp}"]
+]
+for r in range(2):
+    for c in range(2):
+        ax.text(c, r, labels_text[r][c], va='center', ha='center', 
+                fontsize=14, fontweight='bold',
+                color="white" if matrix_data[r][c] > 400 else "black")
+ax.set_xticklabels(['', 'Predicted 0', 'Predicted 1'])
+ax.set_yticklabels(['', 'Actual 0', 'Actual 1'])
+plt.title(f"Confusion Matrix Heatmap\nChosen Metric: {chosen_metric} | F-{beta} Score: {f_beta:.4f}", 
+          fontsize=12, pad=20, fontweight='bold')
+plt.savefig('confusion_matrix_heatmap.png', dpi=300, bbox_inches='tight')
+plt.show()
+=== 1. Confusion Matrix ===
+True Positives (TP)  : 10
+True Negatives (TN)  : 810
+False Positives (FP) : 90
+False Negatives (FN) : 90
+
+=== 2. Metric Decision ===
+Selected Metric: Recall
+Reasoning      : False Negatives (FN) outnumber or equal False Positives (FP). Recall focuses on capturing all positive targets.
+Value          : 0.1000
+
+=== 3. Priority Assignment ===
+Randomly Assigned Higher Priority: False Negatives (FN)
+Setting Beta = 2.0 (Weighs Recall higher than Precision)
+
+=== 4. F-Beta Score ===
+Calculated F-2.0 Score: 0.1000
+
+Generating Confusion Matrix Plot...
+
+
+
+
+
+
+
+
+
+
+
+ 
+       3. Write a Python program that generates a dataset of 1000 rows, where both the actual values of y and the predicted values of y are generated randomly and consist of 900 zeros and 100 ones. The program should
+then:
+1. Calculate the confusion matrix.
+2. Based on the confusion matrix, decide whether to calculate precision or recall.
+3. Randomly assign a priority to False Positives (FP) and False Negatives (FN).
+4. Calculate the F-beta score based on the assigned priority.
+import csv
+import random
+import matplotlib.pyplot as plt
+
+def load_data_from_csv(file_path):
+    """
+    Reads the dataset.csv file and extracts y_true and y_pred values.
+    """
+    y_true_list = []
+    y_pred_list = []
+        with open(file_path, mode='r') as file:
+        csv_reader = csv.reader(file)
+        next(csv_reader)  # Skip the header row
+        for row in csv_reader:
+            if len(row) >= 2:
+                # Index 0 is actual, Index 1 is predicted
+                y_true_list.append(int(row[0]))
+                y_pred_list.append(int(row[1]))
+                
+    return y_true_list, y_pred_list
+if __name__ == "__main__":
+    csv_file_path = "dataset.csv"
+    
+    try:
+        y_true, y_pred = load_data_from_csv(csv_file_path)
+        print(f"Successfully loaded {len(y_true)} rows from '{csv_file_path}'.\n")
+         tp, tn, fp, fn = 0, 0, 0, 0
+       for i in range(len(y_true)):
+            actual = y_true[i]
+            predicted = y_pred[i]
+            
+            if actual == 1 and predicted == 1:
+                tp += 1
+            elif actual == 0 and predicted == 0:
+                tn += 1
+            elif actual == 0 and predicted == 1:
+                fp += 1
+            elif actual == 1 and predicted == 0:
+                fn += 1
+        print("=== 1. Confusion Matrix ===")
+        print(f"True Positives (TP)  : {tp}")
+        print(f"True Negatives (TN)  : {tn}")
+        print(f"False Positives (FP) : {fp}")
+        print(f"False Negatives (FN) : {fn}\n")
+     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+
+        print("=== 2. Metric Decision ===")
+        if fp > fn:
+            chosen_metric = "Precision"
+            reason = "False Positives (FP) outnumber False Negatives (FN). Precision focuses on optimizing predictive certainty."
+            metric_value = precision
+        else:
+            chosen_metric = "Recall"
+            reason = "False Negatives (FN) outnumber or equal False Positives (FP). Recall focuses on capturing all positive targets."
+            metric_value = recall
+
+        print(f"Selected Metric: {chosen_metric}")
+        print(f"Reasoning      : {reason}")
+        print(f"Value          : {metric_value:.4f}\n")
+        priorities = ["False Positives (FP)", "False Negatives (FN)"]
+        high_priority = random.choice(priorities)
+        print("=== 3. Priority Assignment ===")
+        print(f"Randomly Assigned Higher Priority: {high_priority}")
+        if high_priority == "False Negatives (FN)":
+            beta = 2.0  
+            print("Setting Beta = 2.0 (Weighs Recall higher than Precision)")
+        else:
+            beta = 0.5  
+            print("Setting Beta = 0.5 (Weighs Precision higher than Recall)"
+       print("\n=== 4. F-Beta Score ===")
+        f_beta = 0.0
+        if precision + recall > 0:
+            beta_squared = beta ** 2
+            f_beta = (1 + beta_squared) * (precision * recall) / ((beta_squared * precision) + recall)
+            print(f"Calculated F-{beta} Score: {f_beta:.4f}")
+        else:
+            print("F-Beta Score cannot be calculated because both Precision and Recall are 0
+         print("\nGenerating Confusion Matrix Plot...")
+      matrix_data = [[tn, fp], 
+                       [fn, tp]]
+      fig, ax = plt.subplots(figsize=(6, 5))
+        cax = ax.matshow(matrix_data, cmap='Blues')
+        fig.colorbar(cax)
+        labels_text = [
+            [f"TN\n{tn}", f"FP\n{fp}"],
+            [f"FN\n{fn}", f"TP\n{tp}"]
+        ] for r in range(2):
+            for c in range(2):
+                ax.text(c, r, labels_text[r][c], va='center', ha='center', 
+                        fontsize=14, fontweight='bold',
+                        color="white" if matrix_data[r][c] > 400 else "black")ax.set_xticklabels(['', 'Predicted 0', 'Predicted 1'])
+        ax.set_yticklabels(['', 'Actual 0', 'Actual 1'])
+      plt.title(f"Confusion Matrix Heatmap (From CSV)\nMetric: {chosen_metric} | F-{beta} Score: {f_beta:.4f}", 
+                  fontsize=11, pad=20, fontweight='bold')
+        plt.savefig('confusion_matrix_heatmap.png', dpi=300, bbox_inches='tight')
+        plt.show()
+
+    except FileNotFoundError:
+        print(f"Error: The file '{csv_file_path}' was not found. Please make sure it's in the same folder.")
+
+Successfully loaded 10 rows from 'dataset.csv'.
+1. Confusion Matrix
+True Positives (TP)  : 1
+True Negatives (TN)  : 0
+False Positives (FP) : 0
+False Negatives (FN) : 0
+2. Metric Decision 
+Selected Metric: Recall
+Reasoning      : False Negatives (FN) outnumber or equal False Positives (FP). Recall focuses on capturing all positive targets.
+Value          : 1.0000
+ 3. Priority Assignment
+Randomly Assigned Higher Priority: False Positives (FP)
+Setting Beta = 0.5 (Weighs Precision higher than Recall)
+ 4. F-Beta Score
+Calculated F-0.5 Score: 1.0000
+Generating Confusion Matrix Plot...
+
