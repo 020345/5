@@ -1,0 +1,193 @@
+    Write a Python program to solve the given problem using the K-means Algorithm. The dataset is provided below. Consider the value of K=3.
+import pandas as pd
+import numpy as np
+df = pd.read_csv("points.csv")
+print("Dataset:")
+print(df)
+print()
+centroids = {
+    'c1': df.loc[0, ['X', 'Y']].to_numpy(dtype=float),
+    'c2': df.loc[1, ['X', 'Y']].to_numpy(dtype=float),
+    'c3': df.loc[2, ['X', 'Y']].to_numpy(dtype=float)
+}
+def euclidean_distance(point, centroid):
+    diff = point - centroid
+    sq_diff = diff ** 2
+    distance = np.sqrt(np.sum(sq_diff))
+    return float(np.round(distance, 2))
+iteration = 1
+while True:
+    print(f"--- Iteration {iteration} ---")
+    clusters = {'c1': [],'c2': [],'c3': []}
+    for index, row in df.iterrows():
+        point = row[['X', 'Y']].to_numpy(dtype=float)
+        distances = {}
+        for c_name, centroid in centroids.items():
+            distance = euclidean_distance(point, centroid)
+            distances[c_name] = distance
+        closest_cluster = min(distances, key=distances.get)
+        clusters[closest_cluster].append(index)
+        print(
+            f"Point {row['Point']} {point.astype(int)} "
+            f"distances -> {distances} "
+            f"| Assigned to: {closest_cluster}"
+        )
+    new_centroids = {}
+    for c_name, indices in clusters.items():
+        if len(indices) == 0:
+            new_centroids[c_name] = centroids[c_name]
+            continue
+        cluster_data = df.loc[indices, ['X', 'Y']].to_numpy(dtype=float)
+        avg_x = np.round(np.mean(cluster_data[:, 0]), 2)
+        avg_y = np.round(np.mean(cluster_data[:, 1]), 2)
+        new_centroids[c_name] = np.array([avg_x, avg_y])
+    print("Updated Centroids:")
+    for c_name, centroid in new_centroids.items():
+        print(f"{c_name}: {centroid}")
+    print()
+    converged = True
+    for c_name in centroids:
+        if not np.array_equal(centroids[c_name],new_centroids[c_name]):
+            converged = False
+            break
+    if converged:
+        print("Centroids did not change. Algorithm converged!")
+        break
+    centroids = new_centroids
+    iteration += 1
+print("\nFinal Clusters:")
+for c_name, indices in clusters.items():
+    members = df.loc[indices, 'Point'].tolist()
+    print(f"{c_name}: {members}")
+
+ OUTPUT :
+Dataset:
+   Unnamed: 0 Point  X   Y
+0           0     A  2  10
+1           1     B  2   5
+2           2     C  8   4
+3           3     D  5   8
+4           4     E  7   5
+5           5     F  6   4
+6           6     G  1   2
+7           7     H  4   9
+
+Iteration 1 
+Point A [ 2 10] distances -> {'c1': 0.0, 'c2': 5.0, 'c3': 8.49} | Assigned to: c1
+Point B [2 5] distances -> {'c1': 5.0, 'c2': 0.0, 'c3': 6.08} | Assigned to: c2
+Point C [8 4] distances -> {'c1': 8.49, 'c2': 6.08, 'c3': 0.0} | Assigned to: c3
+Point D [5 8] distances -> {'c1': 3.61, 'c2': 4.24, 'c3': 5.0} | Assigned to: c1
+Point E [7 5] distances -> {'c1': 7.07, 'c2': 5.0, 'c3': 1.41} | Assigned to: c3
+Point F [6 4] distances -> {'c1': 7.21, 'c2': 4.12, 'c3': 2.0} | Assigned to: c3
+Point G [1 2] distances -> {'c1': 8.06, 'c2': 3.16, 'c3': 7.28} | Assigned to: c2
+Point H [4 9] distances -> {'c1': 2.24, 'c2': 4.47, 'c3': 6.4} | Assigned to: c1
+Updated Centroids:
+c1: [3.67 9.  ]
+c2: [1.5 3.5]
+c3: [7.   4.33]
+
+Iteration 2 
+Point A [ 2 10] distances -> {'c1': 1.95, 'c2': 6.52, 'c3': 7.56} | Assigned to: c1
+Point B [2 5] distances -> {'c1': 4.33, 'c2': 1.58, 'c3': 5.04} | Assigned to: c2
+Point C [8 4] distances -> {'c1': 6.61, 'c2': 6.52, 'c3': 1.05} | Assigned to: c3
+Point D [5 8] distances -> {'c1': 1.66, 'c2': 5.7, 'c3': 4.18} | Assigned to: c1
+Point E [7 5] distances -> {'c1': 5.2, 'c2': 5.7, 'c3': 0.67} | Assigned to: c3
+Point F [6 4] distances -> {'c1': 5.52, 'c2': 4.53, 'c3': 1.05} | Assigned to: c3
+Point G [1 2] distances -> {'c1': 7.49, 'c2': 1.58, 'c3': 6.44} | Assigned to: c2
+Point H [4 9] distances -> {'c1': 0.33, 'c2': 6.04, 'c3': 5.55} | Assigned to: c1
+Updated Centroids:
+c1: [3.67 9.  ]
+c2: [1.5 3.5]
+c3: [7.   4.33]
+
+Centroids did not change. Algorithm converged!
+
+Final Clusters:
+c1: ['A', 'D', 'H']
+c2: ['B', 'G']
+c3: ['C', 'E', 'F']
+  
+   
+   
+   
+   
+   
+   
+   
+   
+   Write a Python program to solve the given problem using the DBSCAN Algorithm. The dataset is provided below. Consider ε (epsilon) = 2 and MinPts = 2.
+
+import pandas as pd
+import numpy as np
+df = pd.read_csv("points.csv")
+print("Dataset:")
+print(df)
+eps = 2
+min_pts = 2
+def euclidean_distance(point1, point2):
+    difference = point1 - point2
+    squared_difference = difference ** 2
+    distance = np.sqrt(np.sum(squared_difference))
+    return np.round(distance, 4)
+neighborhoods = {}
+print("\n--- Neighborhoods ---")
+for index, row in df.iterrows():
+    point = row[['X', 'Y']].to_numpy(dtype=float)
+    neighbors = []
+    for other_index, other_row in df.iterrows():
+        if index == other_index:
+            continue
+        other_point = other_row[['X', 'Y']].to_numpy(dtype=float)
+        distance = euclidean_distance(point,other_point)
+        if distance <= eps:
+            neighbors.append(df.loc[other_index, 'Point'])
+    point_name = row['Point']
+    neighborhoods[point_name] = neighbors
+    print(f"N({point_name}) = {neighbors}")
+core_points = []
+non_core = []
+for point, neighbors in neighborhoods.items():
+    if len(neighbors) >= min_pts:
+        core_points.append(point)
+    else:
+        non_core.append(point)
+border_points = []
+outliers = []
+for point in non_core:
+    is_border = False
+    for neighbor in neighborhoods[point]:
+        if neighbor in core_points:
+            is_border = True
+            break
+    if is_border:
+        border_points.append(point)
+    else:
+        outliers.append(point)
+print("\n--- Final Categorization ---")
+print(f"Core Points: {core_points}")
+print(f"Border Points: {border_points}")
+print(f"Outliers: {outliers}")
+
+OUTPUT 
+Dataset:
+   Unnamed: 0 Point   X   Y
+0           0     A   1   2
+1           1     B   2   2
+2           2     C   2   3
+3           3     D   8   7
+4           4     E   8   8
+5           5     F  25  80
+
+Neighborhoods 
+N(A) = ['B', 'C']
+N(B) = ['A', 'C']
+N(C) = ['A', 'B']
+N(D) = ['E']
+N(E) = ['D']
+N(F) = []
+
+Final Categorization 
+Core Points: ['A', 'B', 'C']
+Border Points: []
+Outliers: ['D', 'E', 'F']
+
